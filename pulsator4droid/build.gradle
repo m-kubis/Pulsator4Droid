@@ -1,5 +1,9 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'maven-publish'
 apply from: '../config/quality/quality.gradle'
+
+def packageName = 'com.wandera.android'
 
 ext {
     bintrayRepo = 'maven'
@@ -27,27 +31,64 @@ ext {
 
 android {
     compileSdkVersion 24
-    buildToolsVersion "24.0.2"
 
     defaultConfig {
-        minSdkVersion 11
-        targetSdkVersion 24
-        versionCode 2
-        versionName VERSION_NAME
+        minSdkVersion 21
+        targetSdkVersion 22
+        versionCode 3
+        version VERSION_NAME
+        archivesBaseName = "pulsator4droid"
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
         }
     }
     lintOptions {
         abortOnError false
     }
+
+    libraryVariants.all { variant ->
+        println "variant: " + variant.baseName
+        variant.outputs.all { output ->
+            if (outputFile != null && outputFileName.endsWith('.aar')) {
+                // LibraryVariant object does not have #versionNameSuffix
+                def suffix = variant.baseName == "debug" ? "-SNAPSHOT" : ""
+                outputFileName = "${archivesBaseName}-${version}${suffix}.aar"
+                println "outputFileName: " + outputFileName
+            }
+        }
+    }
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+}
+
+publishing {
+    repositories {
+        maven {
+            credentials {
+                username "${artifactory_user}"
+                password "${artifactory_password}"
+            }
+            url "${artifactory_contextUrl}/libs-release-local"
+        }
+    }
+    publications {
+        aar(MavenPublication) {
+            groupId = packageName
+            artifactId = archivesBaseName
+            def targetFile = "$buildDir/outputs/aar/${archivesBaseName}-${version}.aar"
+            println "publishing: " + targetFile
+            // Tell maven to prepare the generated "*.aar" file for publishing
+            artifact(targetFile)
+        }
+    }
 }
 
 apply from: './installv1.gradle'
