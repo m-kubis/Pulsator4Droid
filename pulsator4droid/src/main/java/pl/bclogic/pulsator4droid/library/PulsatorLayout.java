@@ -7,6 +7,9 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Path.Direction;
+import android.graphics.Region.Op;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
@@ -32,6 +35,7 @@ public class PulsatorLayout extends RelativeLayout {
     public static final int INTERP_ACCELERATE = 1;
     public static final int INTERP_DECELERATE = 2;
     public static final int INTERP_ACCELERATE_DECELERATE = 3;
+    public static final float RADIUS_NONE = 0;
 
     private static final int DEFAULT_COUNT = 4;
     private static final int DEFAULT_COLOR = Color.rgb(0, 116, 193);
@@ -62,6 +66,8 @@ public class PulsatorLayout extends RelativeLayout {
     private float mRadius;
     private float mCenterX;
     private float mCenterY;
+    private Path mCircularMask;
+    private float mCircularMaskRadius = RADIUS_NONE;
     private boolean mIsStarted;
 
     /**
@@ -131,6 +137,38 @@ public class PulsatorLayout extends RelativeLayout {
 
         // create views
         build();
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if (mCircularMask == null && mCircularMaskRadius > 0) {
+            mCircularMask = new Path();
+            mCircularMask.addCircle(mCenterX, mCenterY, mCircularMaskRadius, Direction.CW);
+        }
+        if (mCircularMask != null) {
+            canvas.clipPath(mCircularMask, Op.DIFFERENCE);
+        }
+    }
+
+    /**
+     * The pulse animation will be clipped in a concentric circle with a given radius. Useful when we need transparency
+     * in the middle.
+     *
+     * @param radius Radius in pixels for the circle masking out the animation in the center. Providing a value &lt;=0
+     *               disables the masking.
+     */
+    public void setCenterCircularMaskRadius(float radius) {
+        if (radius <= 0) {
+            // disable the onDraw method (masking)
+            setWillNotDraw(true);
+            mCircularMaskRadius = RADIUS_NONE;
+            mCircularMask = null;
+        } else {
+            // enable the onDraw method (masking)
+            setWillNotDraw(false);
+            mCircularMaskRadius = radius;
+            // mask is being initialized on demand during #onDraw(Canvas) method (now enabled)
+        }
     }
 
     /**
@@ -240,6 +278,7 @@ public class PulsatorLayout extends RelativeLayout {
     /**
      * Gets the current color of the pulse effect in integer
      * Defaults to Color.rgb(0, 116, 193);
+     *
      * @return an integer representation of color
      */
     public int getColor() {
@@ -250,6 +289,7 @@ public class PulsatorLayout extends RelativeLayout {
      * Sets the current color of the pulse effect in integer
      * Takes effect immediately
      * Usage: Color.parseColor("<hex-value>") or getResources().getColor(R.color.colorAccent)
+     *
      * @param color : an integer representation of color
      */
     public void setColor(int color) {
@@ -308,6 +348,7 @@ public class PulsatorLayout extends RelativeLayout {
             removeView(view);
         }
         mViews.clear();
+        mCircularMaskRadius = RADIUS_NONE;
     }
 
     /**
