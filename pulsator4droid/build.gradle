@@ -30,11 +30,11 @@ ext {
 }
 
 android {
-    compileSdkVersion 24
+    compileSdkVersion 26
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 22
+        targetSdkVersion 26
         versionCode 3
         version VERSION_NAME
         archivesBaseName = "pulsator4droid"
