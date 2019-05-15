@@ -25,7 +25,6 @@ import java.util.List;
 
 /**
  * Created by booncol on 04.07.2016.
- *
  */
 public class PulsatorLayout extends RelativeLayout {
 
@@ -51,21 +50,21 @@ public class PulsatorLayout extends RelativeLayout {
     private int mColor;
     private int mInterpolator;
 
+    private PulseShape mPulseShape;
+
     private final List<View> mViews = new ArrayList<>();
     /**
      * {@link android.animation.AnimatorSet} seems to be having issues with
-     * {@link android.animation.ValueAnimator#setCurrentPlayTime(long)} being used for its encapsulated animations. We
-     * have to handle them (start them) manually one by one to avoid that.
-     * More precisely Android versions O and P do not take current play time setting into consideration and play all the
-     * animations at the same timing when started using an {@link android.animation.AnimatorSet}.
-     * <p>
-     * (The play time can be fast-forwarded for the whole set, but not before API 26.)
+     * {@link android.animation.ValueAnimator#setCurrentPlayTime(long)}
+     * being used for its encapsulated animations. We have to handle them (start them) manually one
+     * by one to avoid that. More precisely Android versions O and P do not take current play time
+     * setting into consideration and play all the animations at the same timing when started using
+     * an {@link android.animation.AnimatorSet}.
+     *
+     * <p>(The play time can be fast-forwarded for the whole set, but not before API 26.)
      */
     private List<Animator> mAnimators;
     private Paint mPaint;
-    private float mRadius;
-    private float mCenterX;
-    private float mCenterY;
     private Path mCircularMask;
     private float mCircularMaskRadius = RADIUS_NONE;
     private boolean mIsStarted;
@@ -73,8 +72,8 @@ public class PulsatorLayout extends RelativeLayout {
     /**
      * Simple constructor to use when creating a view from code.
      *
-     * @param context The Context the view is running in, through which it can access the current
-     *                theme, resources, etc.
+     * @param context   The Context the view is running in, through which it can access the current
+     *     theme, resources, etc.
      */
     public PulsatorLayout(Context context) {
         this(context, null, 0);
@@ -83,8 +82,8 @@ public class PulsatorLayout extends RelativeLayout {
     /**
      * Constructor that is called when inflating a view from XML.
      *
-     * @param context The Context the view is running in, through which it can access the current
-     *                theme, resources, etc.
+     * @param context   The Context the view is running in, through which it can access the current
+     *     theme, resources, etc.
      * @param attrs The attributes of the XML tag that is inflating the view.
      */
     public PulsatorLayout(Context context, AttributeSet attrs) {
@@ -94,12 +93,11 @@ public class PulsatorLayout extends RelativeLayout {
     /**
      * Perform inflation from XML and apply a class-specific base style from a theme attribute.
      *
-     * @param context The Context the view is running in, through which it can access the current
-     *                theme, resources, etc.
+     * @param context   The Context the view is running in, through which it can access the current
+     *     theme, resources, etc.
      * @param attrs The attributes of the XML tag that is inflating the view.
-     * @param defStyleAttr An attribute in the current theme that contains a reference to a style
-     *                     resource that supplies default values for the view. Can be 0 to not look
-     *                     for defaults.
+     * @param defStyleAttr  An attribute in the current theme that contains a reference to a style
+     *     resource that supplies default values for the view. Can be 0 to not look for defaults.
      */
     public PulsatorLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
@@ -107,6 +105,7 @@ public class PulsatorLayout extends RelativeLayout {
         // get attributes
         TypedArray attr = context.getTheme().obtainStyledAttributes(
                 attrs, R.styleable.Pulsator4Droid, 0, 0);
+        int pulseShapeType;
 
         mCount = DEFAULT_COUNT;
         mDuration = DEFAULT_DURATION;
@@ -114,6 +113,7 @@ public class PulsatorLayout extends RelativeLayout {
         mStartFromScratch = DEFAULT_START_FROM_SCRATCH;
         mColor = DEFAULT_COLOR;
         mInterpolator = DEFAULT_INTERPOLATOR;
+        mPulseShape = new PulseCircle(mPaint);
 
         try {
             mCount = attr.getInteger(R.styleable.Pulsator4Droid_pulse_count, DEFAULT_COUNT);
@@ -125,6 +125,7 @@ public class PulsatorLayout extends RelativeLayout {
             mColor = attr.getColor(R.styleable.Pulsator4Droid_pulse_color, DEFAULT_COLOR);
             mInterpolator = attr.getInteger(R.styleable.Pulsator4Droid_pulse_interpolator,
                     DEFAULT_INTERPOLATOR);
+            pulseShapeType = attr.getInt(R.styleable.Pulsator4Droid_pulse_shape, 0);
         } finally {
             attr.recycle();
         }
@@ -135,6 +136,8 @@ public class PulsatorLayout extends RelativeLayout {
         mPaint.setStyle(Paint.Style.FILL);
         mPaint.setColor(mColor);
 
+        mPulseShape = createPulseShapeFromAttr(pulseShapeType, mPaint);
+
         // create views
         build();
     }
@@ -143,7 +146,9 @@ public class PulsatorLayout extends RelativeLayout {
     protected void onDraw(Canvas canvas) {
         if (mCircularMask == null && mCircularMaskRadius > 0) {
             mCircularMask = new Path();
-            mCircularMask.addCircle(mCenterX, mCenterY, mCircularMaskRadius, Direction.CW);
+            PulseCircle circle = (PulseCircle) mPulseShape;
+            mCircularMask.addCircle(
+                    circle.getCenterX(), circle.getCenterY(), mCircularMaskRadius, Direction.CW);
         }
         if (mCircularMask != null) {
             canvas.clipPath(mCircularMask, Op.DIFFERENCE);
@@ -151,23 +156,39 @@ public class PulsatorLayout extends RelativeLayout {
     }
 
     /**
-     * The pulse animation will be clipped in a concentric circle with a given radius. Useful when we need transparency
-     * in the middle.
+     * @return Shape as defined in 'pulse_shape' custom attribute.
+     */
+    private PulseShape createPulseShapeFromAttr(int attribute, Paint paint) {
+        switch (attribute) {
+            case 1:
+                return new PulseOval(paint);
+            default:
+                return new PulseCircle(paint);
+        }
+    }
+
+    /**
+     * The pulse animation will be clipped in a concentric circle with a given radius. Useful when
+     * we need transparency in the middle. Requires the shape to be {@link PulseCircle}, does
+     * nothing otherwise.
      *
-     * @param radius Radius in pixels for the circle masking out the animation in the center. Providing a value &lt;=0
-     *               disables the masking.
+     * @param radius    Radius in pixels for the circle masking out the animation in the center.
+     *     Providing a value &lt;=0 disables the masking.
      */
     public void setCenterCircularMaskRadius(float radius) {
-        if (radius <= 0) {
-            // disable the onDraw method (masking)
-            setWillNotDraw(true);
-            mCircularMaskRadius = RADIUS_NONE;
-            mCircularMask = null;
-        } else {
-            // enable the onDraw method (masking)
-            setWillNotDraw(false);
-            mCircularMaskRadius = radius;
-            // mask is being initialized on demand during #onDraw(Canvas) method (now enabled)
+        if (mPulseShape instanceof PulseCircle) {
+            if (radius <= 0) {
+                // disable the onDraw method (masking)
+                setWillNotDraw(true);
+                mCircularMaskRadius = RADIUS_NONE;
+                mCircularMask = null;
+            } else {
+                // enable the onDraw method (masking)
+                setWillNotDraw(false);
+                mCircularMaskRadius = radius;
+                // mask is being initialized on demand during #onDraw(Canvas) method (now enabled)
+                // to make sure there has already been #onMeasure(int, int) pass
+            }
         }
     }
 
@@ -188,17 +209,19 @@ public class PulsatorLayout extends RelativeLayout {
                 objectAnimator.setStartDelay(0);
 
                 // This is where it starts to get tricky. The documentation of
-                // ValueAnimator#setCurrentPlayTime(long) is a bit confusing about whether it should be called before
-                // or after starting the animation itself. The truth is, it seems the behavior differs between Android
-                // versions. If it gets called at a wrong time, only some of the animations will start while others will
-                // not or the animated object won't be visible at all.
-                boolean shouldStartBeforeSettingCurrentTime = Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1;
+                // ValueAnimator#setCurrentPlayTime(long) is a bit confusing about whether it
+                // should be called before or after starting the animation itself. The truth is,
+                // it seems the behavior differs between Android versions. If it gets called at
+                // a wrong time, only some of the animations will start while others will not or
+                // the animated object won't be visible at all.
+                boolean shouldStartBeforeSettingCurrentTime =
+                        Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1;
 
-                if(shouldStartBeforeSettingCurrentTime){
+                if (shouldStartBeforeSettingCurrentTime) {
                     objectAnimator.start();
                 }
                 objectAnimator.setCurrentPlayTime(mDuration - delay);
-                if(!shouldStartBeforeSettingCurrentTime){
+                if (!shouldStartBeforeSettingCurrentTime) {
                     objectAnimator.start();
                 }
             } else {
@@ -276,8 +299,7 @@ public class PulsatorLayout extends RelativeLayout {
     }
 
     /**
-     * Gets the current color of the pulse effect in integer
-     * Defaults to Color.rgb(0, 116, 193);
+     * Gets the current color of the pulse effect in integer Defaults to Color.rgb(0, 116, 193);
      *
      * @return an integer representation of color
      */
@@ -286,9 +308,8 @@ public class PulsatorLayout extends RelativeLayout {
     }
 
     /**
-     * Sets the current color of the pulse effect in integer
-     * Takes effect immediately
-     * Usage: Color.parseColor("<hex-value>") or getResources().getColor(R.color.colorAccent)
+     * Sets the current color of the pulse effect in integer Takes effect immediately Usage:
+     * Color.parseColor("hex-value") or getResources().getColor(R.color.colorAccent)
      *
      * @param color : an integer representation of color
      */
@@ -329,15 +350,13 @@ public class PulsatorLayout extends RelativeLayout {
         int width = MeasureSpec.getSize(widthMeasureSpec) - getPaddingLeft() - getPaddingRight();
         int height = MeasureSpec.getSize(heightMeasureSpec) - getPaddingTop() - getPaddingBottom();
 
-        mCenterX = width * 0.5f;
-        mCenterY = height * 0.5f;
-        mRadius = Math.min(width, height) * 0.5f;
+        mPulseShape.setSize(width, height);
 
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
     /**
-     * Remove all views and animators.
+     * vv Remove all views and animators.
      */
     private void clear() {
         // remove animators
@@ -442,7 +461,7 @@ public class PulsatorLayout extends RelativeLayout {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
 
-        if(mAnimators != null) {
+        if (mAnimators != null) {
             for (Animator animator : mAnimators) {
                 animator.cancel();
             }
@@ -458,7 +477,7 @@ public class PulsatorLayout extends RelativeLayout {
 
         @Override
         protected void onDraw(Canvas canvas) {
-            canvas.drawCircle(mCenterX, mCenterY, mRadius, mPaint);
+            mPulseShape.draw(canvas);
         }
 
     }
