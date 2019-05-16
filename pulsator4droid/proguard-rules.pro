@@ -24,7 +24,8 @@
 
 -keep public class * {
     public <init>(android.content.Context, android.util.AttributeSet);
-    public protected <methods>;
+    public <methods>;
+    protected <methods>;
     synchronized <methods>;
 }
 

@@ -14,9 +14,9 @@
         </attr>
         <!-- Translated in PulsatorLayout#createPulseShapeFromAttr(int, paint) -->
         <attr name="pulse_shape" format="enum">
-            <enum name="CIRCLE" value="0" />
-            <enum name="RING" value="1" />
-            <enum name="OVAL" value="2" />
+            <enum name="circle" value="0" />
+            <enum name="ring" value="1" />
+            <enum name="rounded_rectangle" value="2" />
         </attr>
     </declare-styleable>
 </resources>

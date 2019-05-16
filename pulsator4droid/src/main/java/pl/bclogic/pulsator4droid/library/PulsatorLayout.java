@@ -161,7 +161,7 @@ public class PulsatorLayout extends RelativeLayout {
     private PulseShape createPulseShapeFromAttr(int attribute, Paint paint) {
         switch (attribute) {
             case 1:
-                return new PulseOval(paint);
+                return new PulseRoundedRectangle(paint);
             default:
                 return new PulseCircle(paint);
         }
