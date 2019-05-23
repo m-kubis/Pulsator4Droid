@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Path.Direction;
+import android.graphics.RectF;
 import android.graphics.Region.Op;
 import android.os.Build;
 import android.util.AttributeSet;
@@ -65,8 +66,10 @@ public class PulsatorLayout extends RelativeLayout {
      */
     private List<Animator> mAnimators;
     private Paint mPaint;
-    private Path mCircularMask;
+    private Path mMask;
     private float mCircularMaskRadius = RADIUS_NONE;
+    private int mRoundedRectangleMaskWidth = 0;
+    private int mRoundedRectangleMaskHeight = 0;
     private boolean mIsStarted;
 
     /**
@@ -144,14 +147,26 @@ public class PulsatorLayout extends RelativeLayout {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (mCircularMask == null && mCircularMaskRadius > 0) {
-            mCircularMask = new Path();
+        if (mMask == null && mCircularMaskRadius > 0) {
+            mMask = new Path();
             PulseCircle circle = (PulseCircle) mPulseShape;
-            mCircularMask.addCircle(
+            mMask.addCircle(
                     circle.getCenterX(), circle.getCenterY(), mCircularMaskRadius, Direction.CW);
+        } else if (mMask == null
+                && mRoundedRectangleMaskWidth > 0
+                && mRoundedRectangleMaskHeight > 0) {
+
+            mMask = new Path();
+            RectF rectangle = ((PulseRoundedRectangle) mPulseShape).getRect();
+            float left = (rectangle.right - rectangle.left - mRoundedRectangleMaskWidth) * 0.5f;
+            float right = left + mRoundedRectangleMaskWidth;
+            float top = (rectangle.bottom - rectangle.top - mRoundedRectangleMaskHeight) * 0.5f;
+            float bottom = top + mRoundedRectangleMaskHeight;
+            mMask.addRoundRect(
+                    left, top, right, bottom, Integer.MAX_VALUE, Integer.MAX_VALUE, Direction.CW);
         }
-        if (mCircularMask != null) {
-            canvas.clipPath(mCircularMask, Op.DIFFERENCE);
+        if (mMask != null) {
+            canvas.clipPath(mMask, Op.DIFFERENCE);
         }
     }
 
@@ -181,11 +196,40 @@ public class PulsatorLayout extends RelativeLayout {
                 // disable the onDraw method (masking)
                 setWillNotDraw(true);
                 mCircularMaskRadius = RADIUS_NONE;
-                mCircularMask = null;
+                mMask = null;
             } else {
                 // enable the onDraw method (masking)
                 setWillNotDraw(false);
                 mCircularMaskRadius = radius;
+                // mask is being initialized on demand during #onDraw(Canvas) method (now enabled)
+                // to make sure there has already been #onMeasure(int, int) pass
+            }
+        }
+    }
+
+    /**
+     * The pulse animation will be clipped in a rounded rectangle of the given size with a given
+     * radius. Useful when we need transparency in the middle. Requires the shape to be
+     * {@link PulseRoundedRectangle}, does nothing otherwise.
+     *
+     * @param width    Width in pixels for the rounded rectangle masking out the animation in
+     *      the center. Providing a value &lt;=0 disables the masking.
+     * @param height   Height in pixels for the rounded rectangle masking out the animation in
+     *      the center. Providing a value &lt;=0 disables the masking.
+     */
+    public void setCenterRoundedRectangleMask(int width, int height) {
+        if (mPulseShape instanceof PulseRoundedRectangle) {
+            if (width < 1 || height < 1) {
+                // disable the onDraw method (masking)
+                setWillNotDraw(true);
+                mRoundedRectangleMaskWidth = 0;
+                mRoundedRectangleMaskHeight = 0;
+                mMask = null;
+            } else {
+                // enable the onDraw method (masking)
+                setWillNotDraw(false);
+                mRoundedRectangleMaskWidth = width;
+                mRoundedRectangleMaskHeight = height;
                 // mask is being initialized on demand during #onDraw(Canvas) method (now enabled)
                 // to make sure there has already been #onMeasure(int, int) pass
             }
