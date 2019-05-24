@@ -12,11 +12,10 @@
             <enum name="Decelerate" value="2" />
             <enum name="AccelerateDecelerate" value="3" />
         </attr>
-        <!-- Translated in PulsatorLayout#createPulseShapeFromAttr(int, paint) -->
+        <!-- Correlates to constants defined in PulsatorLayout (e.g. PULSE_TYPE_CIRCLE) -->
         <attr name="pulse_shape" format="enum">
             <enum name="circle" value="0" />
-            <enum name="ring" value="1" />
-            <enum name="rounded_rectangle" value="2" />
+            <enum name="rounded_rectangle" value="1" />
         </attr>
     </declare-styleable>
 </resources>

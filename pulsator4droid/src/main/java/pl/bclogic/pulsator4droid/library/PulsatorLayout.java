@@ -21,8 +21,14 @@ import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.RelativeLayout;
 
+import androidx.annotation.IntDef;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.List;
+
+import timber.log.Timber;
 
 /**
  * Created by booncol on 04.07.2016.
@@ -36,6 +42,15 @@ public class PulsatorLayout extends RelativeLayout {
     public static final int INTERP_DECELERATE = 2;
     public static final int INTERP_ACCELERATE_DECELERATE = 3;
     public static final float RADIUS_NONE = 0;
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({PULSE_TYPE_CIRCLE, PULSE_TYPE_ROUNDED_RECTANGLE})
+    @interface ShapeType {
+
+    }
+
+    public static final int PULSE_TYPE_CIRCLE = 0;
+    public static final int PULSE_TYPE_ROUNDED_RECTANGLE = 1;
 
     private static final int DEFAULT_COUNT = 4;
     private static final int DEFAULT_COLOR = Color.rgb(0, 116, 193);
@@ -128,7 +143,7 @@ public class PulsatorLayout extends RelativeLayout {
             mColor = attr.getColor(R.styleable.Pulsator4Droid_pulse_color, DEFAULT_COLOR);
             mInterpolator = attr.getInteger(R.styleable.Pulsator4Droid_pulse_interpolator,
                     DEFAULT_INTERPOLATOR);
-            pulseShapeType = attr.getInt(R.styleable.Pulsator4Droid_pulse_shape, 0);
+            pulseShapeType = attr.getInt(R.styleable.Pulsator4Droid_pulse_shape, PULSE_TYPE_CIRCLE);
         } finally {
             attr.recycle();
         }
@@ -139,7 +154,7 @@ public class PulsatorLayout extends RelativeLayout {
         mPaint.setStyle(Paint.Style.FILL);
         mPaint.setColor(mColor);
 
-        mPulseShape = createPulseShapeFromAttr(pulseShapeType, mPaint);
+        setPulseShapeType(pulseShapeType);
 
         // create views
         build();
@@ -175,9 +190,12 @@ public class PulsatorLayout extends RelativeLayout {
      */
     private PulseShape createPulseShapeFromAttr(int attribute, Paint paint) {
         switch (attribute) {
-            case 1:
+            case PULSE_TYPE_ROUNDED_RECTANGLE:
                 return new PulseRoundedRectangle(paint);
+            case PULSE_TYPE_CIRCLE:
+                return new PulseCircle(paint);
             default:
+                Timber.e("Unknown shape type value %d, using circle", attribute);
                 return new PulseCircle(paint);
         }
     }
@@ -300,15 +318,6 @@ public class PulsatorLayout extends RelativeLayout {
     }
 
     /**
-     * Get pulse duration.
-     *
-     * @return Duration of single pulse in milliseconds
-     */
-    public int getDuration() {
-        return mDuration;
-    }
-
-    /**
      * Set number of pulses.
      *
      * @param count Number of pulses
@@ -323,6 +332,15 @@ public class PulsatorLayout extends RelativeLayout {
             reset();
             invalidate();
         }
+    }
+
+    /**
+     * Get pulse duration.
+     *
+     * @return Duration of single pulse in milliseconds
+     */
+    public int getDuration() {
+        return mDuration;
     }
 
     /**
@@ -387,6 +405,34 @@ public class PulsatorLayout extends RelativeLayout {
             reset();
             invalidate();
         }
+    }
+
+    /**
+     * Set how many times the pulse should repeat.
+     *
+     * @param repeat {@link #INFINITE} for infinite repeat. Also the default value.
+     */
+    public void setRepeat(int repeat) {
+        mRepeat = repeat;
+    }
+
+    /**
+     * Determines whether the animation starts empty and pulses are added gradually making
+     * the animation come from the center or have all the rings present at time of starting.
+     * @param startFromScratch <code>true</code> to add pulses one by one from the center.
+     * <code>true</code> by default.
+     */
+    public void setStartFromScratch(boolean startFromScratch) {
+        mStartFromScratch = startFromScratch;
+    }
+
+    /**
+     * Type of shape to be used.
+     *
+     * @param type {@link ShapeType#PULSE_TYPE_CIRCLE} by default.
+     */
+    public void setPulseShapeType(@ShapeType int type) {
+        mPulseShape = createPulseShapeFromAttr(type, mPaint);
     }
 
     @Override
