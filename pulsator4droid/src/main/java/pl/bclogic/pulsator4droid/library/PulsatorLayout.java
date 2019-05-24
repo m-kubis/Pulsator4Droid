@@ -21,6 +21,7 @@ import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.RelativeLayout;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.IntDef;
 
 import java.lang.annotation.Retention;
@@ -365,6 +366,7 @@ public class PulsatorLayout extends RelativeLayout {
      *
      * @return an integer representation of color
      */
+    @ColorInt
     public int getColor() {
         return mColor;
     }
@@ -375,7 +377,7 @@ public class PulsatorLayout extends RelativeLayout {
      *
      * @param color : an integer representation of color
      */
-    public void setColor(int color) {
+    public void setColor(@ColorInt int color) {
         if (color != mColor) {
             this.mColor = color;
 
