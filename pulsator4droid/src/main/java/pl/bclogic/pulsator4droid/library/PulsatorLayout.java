@@ -256,10 +256,20 @@ public class PulsatorLayout extends RelativeLayout {
     }
 
     /**
-     * Start pulse animation.
+     * Start pulse animation. If the start request comes and there are no animations to run
+     * (e.g. the view has been re-attached to a view before (and animations cleared), it is
+     * reinitialized.
      */
     public synchronized void start() {
-        if (mAnimators == null || mIsStarted) {
+
+        if (mAnimators == null) {
+            reset();
+            if (mAnimators == null) {
+                return;
+            }
+        }
+
+        if (mIsStarted) {
             return;
         }
 
