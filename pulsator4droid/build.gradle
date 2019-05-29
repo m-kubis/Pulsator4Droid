@@ -55,7 +55,7 @@ android {
     libraryVariants.all { variant ->
         println "variant: " + variant.baseName
         variant.outputs.all { output ->
-            if (outputFile != null && outputFileName.endsWith('.aar')) {
+            if (variant.getPackageLibraryProvider().get() != null) {
                 // LibraryVariant object does not have #versionNameSuffix
                 def suffix = variant.baseName == "debug" ? "-SNAPSHOT" : ""
                 outputFileName = "${archivesBaseName}-${version}${suffix}.aar"
