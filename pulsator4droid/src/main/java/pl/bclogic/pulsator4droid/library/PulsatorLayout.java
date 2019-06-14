@@ -4,11 +4,15 @@ import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Path.Direction;
+import android.graphics.PorterDuff.Mode;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.graphics.Region.Op;
 import android.os.Build;
@@ -66,6 +70,12 @@ public class PulsatorLayout extends RelativeLayout {
     private boolean mStartFromScratch;
     private int mColor;
     private int mInterpolator;
+    private long mStartTime;
+    private RectF mRoundedRectangleMask;
+    private Bitmap mRoundRectangleBitmap;
+    private Canvas mRoundedRectangleCanvas;
+    private Paint mDefaultPaint;
+    private Paint mRoundedRectangleMaskPaint;
 
     private PulseShape mPulseShape;
 
@@ -163,26 +173,66 @@ public class PulsatorLayout extends RelativeLayout {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (mMask == null && mCircularMaskRadius > 0) {
-            mMask = new Path();
-            PulseCircle circle = (PulseCircle) mPulseShape;
-            mMask.addCircle(
-                    circle.getCenterX(), circle.getCenterY(), mCircularMaskRadius, Direction.CW);
-        } else if (mMask == null
-                && mRoundedRectangleMaskWidth > 0
-                && mRoundedRectangleMaskHeight > 0) {
+        if (mPulseShape instanceof PulseCircle) {
 
-            mMask = new Path();
-            RectF rectangle = ((PulseRoundedRectangle) mPulseShape).getRect();
-            float left = (rectangle.right - rectangle.left - mRoundedRectangleMaskWidth) * 0.5f;
-            float right = left + mRoundedRectangleMaskWidth;
-            float top = (rectangle.bottom - rectangle.top - mRoundedRectangleMaskHeight) * 0.5f;
-            float bottom = top + mRoundedRectangleMaskHeight;
-            mMask.addRoundRect(
-                    left, top, right, bottom, Integer.MAX_VALUE, Integer.MAX_VALUE, Direction.CW);
-        }
-        if (mMask != null) {
-            canvas.clipPath(mMask, Op.DIFFERENCE);
+            if (mMask == null && mCircularMaskRadius > 0) {
+                mMask = new Path();
+                PulseCircle circle = (PulseCircle) mPulseShape;
+                mMask.addCircle(
+                        circle.getCenterX(), circle.getCenterY(), mCircularMaskRadius, Direction.CW);
+            }
+            if (mMask != null) {
+                canvas.clipPath(mMask, Op.DIFFERENCE);
+            }
+        } else {
+
+            if (mMask == null
+                    && mRoundedRectangleMaskWidth > 0
+                    && mRoundedRectangleMaskHeight > 0) {
+
+                mMask = new Path();
+                RectF rectangle = ((PulseRoundedRectangle) mPulseShape).getRect();
+                float left = (rectangle.right - rectangle.left - mRoundedRectangleMaskWidth) * 0.5f;
+                float right = left + mRoundedRectangleMaskWidth;
+                float top = (rectangle.bottom - rectangle.top - mRoundedRectangleMaskHeight) * 0.5f;
+                float bottom = top + mRoundedRectangleMaskHeight;
+                mMask.addRoundRect(
+                        left, top, right, bottom, Integer.MAX_VALUE, Integer.MAX_VALUE, Direction.CW);
+            }
+
+            if (mRoundedRectangleMask == null) {
+                mRoundedRectangleMask = ((PulseRoundedRectangle) mPulseShape).getRect();
+                mRoundRectangleBitmap = Bitmap.createBitmap(getWidth(), getHeight(), Config.ARGB_8888);
+                mRoundedRectangleCanvas = new Canvas(mRoundRectangleBitmap);
+                mDefaultPaint = new Paint();
+                mRoundedRectangleMaskPaint = new Paint();
+                mRoundedRectangleMaskPaint.setXfermode(new PorterDuffXfermode(Mode.CLEAR));
+            }
+
+            float width = getWidth();
+            float height = getHeight();
+
+            float progress = ((System.currentTimeMillis() - mStartTime) % (float) mDuration) / mDuration;
+            float radius = height / 2;
+
+            float maskLeft = (mRoundedRectangleMask.right - mRoundedRectangleMask.left - mRoundedRectangleMaskWidth) / 2;
+            float maskTop = (mRoundedRectangleMask.bottom - mRoundedRectangleMask.top - mRoundedRectangleMaskHeight) / 2;
+
+            float left = maskLeft - (maskLeft * progress);
+            float top = maskTop - (maskTop * progress);
+            float right = width - left;
+            float bottom = height - top;
+
+            mRoundedRectangleCanvas.drawColor(Color.BLACK, Mode.CLEAR);
+            mRoundedRectangleCanvas.drawRoundRect(left, top, right, bottom, radius, radius, mPaint);
+
+            if (mMask != null) {
+                mRoundedRectangleCanvas.drawPath(mMask, mRoundedRectangleMaskPaint);
+            }
+
+            canvas.drawBitmap(mRoundRectangleBitmap, 0, 0, mDefaultPaint);
+
+            invalidate();
         }
     }
 
@@ -261,6 +311,13 @@ public class PulsatorLayout extends RelativeLayout {
      * reinitialized.
      */
     public synchronized void start() {
+
+        if (mPulseShape instanceof PulseRoundedRectangle) {
+            mIsStarted = true;
+            mStartTime = System.currentTimeMillis();
+            invalidate();
+            return;
+        }
 
         if (mAnimators == null) {
             reset();
