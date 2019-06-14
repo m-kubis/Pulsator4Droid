@@ -15,6 +15,8 @@ import android.util.AttributeSet;
 
 public class RoundedRectanglePulsatorLayout extends PulsatorLayout {
 
+    private static final int ALPHA_MAX = 0x88;
+
     private int mMaskWidth = 0;
     private int mMaskHeight = 0;
 
@@ -76,6 +78,7 @@ public class RoundedRectanglePulsatorLayout extends PulsatorLayout {
         float bottom = height - top;
 
         mCanvas.drawColor(Color.BLACK, Mode.CLEAR);
+        mPaint.setAlpha((int) (ALPHA_MAX * (1 - progress)));
         mCanvas.drawRoundRect(left, top, right, bottom, radius, radius, mPaint);
 
         if (mMask != null) {
@@ -84,7 +87,7 @@ public class RoundedRectanglePulsatorLayout extends PulsatorLayout {
 
         canvas.drawBitmap(mBitmap, 0, 0, mBitmapPaint);
 
-        if(isStarted()) {
+        if (isStarted()) {
             invalidate();
         }
     }
