@@ -66,20 +66,24 @@ public class RoundedRectanglePulsatorLayout extends PulsatorLayout {
         float width = getWidth();
         float height = getHeight();
 
-        float progress = ((System.currentTimeMillis() - mStartTime) % (float) mDuration) / mDuration;
-        float radius = height / 2;
-
-        float maskLeft = (pulseRectangle.right - pulseRectangle.left - mMaskWidth) / 2;
-        float maskTop = (pulseRectangle.bottom - pulseRectangle.top - mMaskHeight) / 2;
-
-        float left = maskLeft - (maskLeft * progress);
-        float top = maskTop - (maskTop * progress);
-        float right = width - left;
-        float bottom = height - top;
-
         mCanvas.drawColor(Color.BLACK, Mode.CLEAR);
-        mPaint.setAlpha((int) (ALPHA_MAX * (1 - progress)));
-        mCanvas.drawRoundRect(left, top, right, bottom, radius, radius, mPaint);
+        for (int i = 0; i < mCount; i++) {
+
+            float maskLeft = (pulseRectangle.right - pulseRectangle.left - mMaskWidth) / 2;
+            float maskTop = (pulseRectangle.bottom - pulseRectangle.top - mMaskHeight) / 2;
+
+            float progress = ((System.currentTimeMillis() - mStartTime) % (float) mDuration) / mDuration;
+            float offsetProgress = (1.0f / mCount * i + progress) % 1.0f;
+            float radius = height / 2;
+
+            float left = maskLeft - (maskLeft * offsetProgress);
+            float top = maskTop - (maskTop * offsetProgress);
+            float right = width - left;
+            float bottom = height - top;
+
+            mPaint.setAlpha((int) (ALPHA_MAX * (1 - offsetProgress)));
+            mCanvas.drawRoundRect(left, top, right, bottom, radius, radius, mPaint);
+        }
 
         if (mMask != null) {
             mCanvas.drawPath(mMask, mMaskPaint);
