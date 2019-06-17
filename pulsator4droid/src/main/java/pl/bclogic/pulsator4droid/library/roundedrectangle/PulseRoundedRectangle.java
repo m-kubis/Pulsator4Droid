@@ -1,8 +1,10 @@
-package pl.bclogic.pulsator4droid.library;
+package pl.bclogic.pulsator4droid.library.roundedrectangle;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
+
+import pl.bclogic.pulsator4droid.library.PulseShape;
 
 public class PulseRoundedRectangle implements PulseShape {
 

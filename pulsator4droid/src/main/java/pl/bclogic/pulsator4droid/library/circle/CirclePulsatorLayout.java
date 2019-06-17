@@ -1,4 +1,4 @@
-package pl.bclogic.pulsator4droid.library;
+package pl.bclogic.pulsator4droid.library.circle;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
@@ -20,6 +20,10 @@ import android.view.animation.LinearInterpolator;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import pl.bclogic.pulsator4droid.library.PulsatorLayout;
+import pl.bclogic.pulsator4droid.library.PulseShape;
+import pl.bclogic.pulsator4droid.library.R;
 
 public class CirclePulsatorLayout extends PulsatorLayout {
 

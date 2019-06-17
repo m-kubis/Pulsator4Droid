@@ -1,4 +1,4 @@
-package pl.bclogic.pulsator4droid.library;
+package pl.bclogic.pulsator4droid.library.roundedrectangle;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -12,6 +12,9 @@ import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+
+import pl.bclogic.pulsator4droid.library.PulsatorLayout;
+import pl.bclogic.pulsator4droid.library.PulseShape;
 
 public class RoundedRectanglePulsatorLayout extends PulsatorLayout {
 

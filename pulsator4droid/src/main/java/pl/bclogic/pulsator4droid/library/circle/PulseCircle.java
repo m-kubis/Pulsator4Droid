@@ -1,7 +1,9 @@
-package pl.bclogic.pulsator4droid.library;
+package pl.bclogic.pulsator4droid.library.circle;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+
+import pl.bclogic.pulsator4droid.library.PulseShape;
 
 public class PulseCircle implements PulseShape {
 
