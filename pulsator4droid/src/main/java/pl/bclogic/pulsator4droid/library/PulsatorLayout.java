@@ -21,7 +21,7 @@ public abstract class PulsatorLayout extends RelativeLayout {
     private static final int DEFAULT_COUNT = 4;
     private static final int DEFAULT_COLOR = Color.rgb(0, 116, 193);
     private static final int DEFAULT_DURATION = 7000;
-
+  
     protected int mCount;
     protected int mDuration;
     protected int mRepeat;
@@ -172,7 +172,8 @@ public abstract class PulsatorLayout extends RelativeLayout {
     }
 
     /**
-     * Gets the current color of the pulse effect in integer Defaults to Color.rgb(0, 116, 193);
+     * Gets the current color of the pulse effect in integer
+     * Defaults to Color.rgb(0, 116, 193);
      *
      * @return an integer representation of color
      */
@@ -182,8 +183,9 @@ public abstract class PulsatorLayout extends RelativeLayout {
     }
 
     /**
-     * Sets the current color of the pulse effect in integer Takes effect immediately Usage:
-     * Color.parseColor("hex-value") or getResources().getColor(R.color.colorAccent)
+     * Sets the current color of the pulse effect in integer
+     * Takes effect immediately
+     * Usage: Color.parseColor("<hex-value>") or getResources().getColor(R.color.colorAccent)
      *
      * @param color : an integer representation of color
      */
@@ -206,5 +208,4 @@ public abstract class PulsatorLayout extends RelativeLayout {
 
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
-
 }

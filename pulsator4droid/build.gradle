@@ -63,7 +63,6 @@ android {
             }
         }
     }
-
     // workaround for https://github.com/gradle/gradle/issues/8328
     // The name is properly built and reported in the script above, but the output file names are simply
     // pulsator4droid-debug.aar and pulsator4droid-release.aar
@@ -81,7 +80,6 @@ android {
             }
         }
     }
-
 }
 
 dependencies {
